@@ -1,0 +1,27 @@
+#pragma once
+#include "../AuroraUtility/StringManager.h"
+#include "ChatUserInfo.h"
+
+using namespace Aurora;
+using namespace Aurora::Network;
+
+ChatUserInfo::ChatUserInfo( Int64 AccountUniqueID, WCHAR* pAccountID, WCHAR* pNickName, SOCKET Socket ) :
+	accountUniqueID( AccountUniqueID ), socket( Socket )
+{
+	AuroraStringManager->ClearAndCopy( pAccountID, accountID, (MAX_ACCOUNT_ID_LEN - 1) );
+	AuroraStringManager->ClearAndCopy( pNickName, nickName, (MAX_NICKNAME_LEN - 1) );
+}
+
+ChatUserInfo::~ChatUserInfo( void )
+{
+
+}
+
+void ChatUserInfo::Reset( void )
+{
+	accountUniqueID = 0;
+	socket = INVALID_SOCKET;
+
+	AuroraStringManager->Clear( accountID, MAX_ACCOUNT_ID_LEN );
+	AuroraStringManager->Clear( nickName, MAX_NICKNAME_LEN );
+}
