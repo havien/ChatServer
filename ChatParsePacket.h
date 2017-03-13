@@ -16,8 +16,8 @@ private:
 	PacketProcessor( void );
 	NON_COPYABLE( PacketProcessor );
 public:
+	void CreateEventHandles( UInt16 waitEventCount );
 	virtual ~PacketProcessor( void );
-
 	static UInt32 __stdcall ParsePacket( void* pArgs );
 
 	void RequestSend( SOCKET Socket, const void* pPacket, const size_t PacketSize );
@@ -28,7 +28,8 @@ public:
 	bool ProcessLogin( SOCKET Socket, WCHAR* pAccountID, WCHAR* pPassword );
 	bool ProcessLogout( SOCKET Socket, UInt32 AccountUniqueID );
 	bool ProcessNormalChat( SOCKET Socket, const WCHAR* pSenderAccountID, const WCHAR* pChatText );
-	bool ProcessWhisperNormalChat( SOCKET Socket, const WCHAR* pSenderAccountID, const WCHAR* pTargetAccountID, const WCHAR* pChatText );
+	bool ProcessWhisperNormalChat( SOCKET Socket, const WCHAR* pSenderAccountID, 
+								   const WCHAR* pTargetAccountID, const WCHAR* pChatText );
 
 	bool FindUser( UInt32 AccountUniqueID );
 	ChatUserInfo * GetUserInfo( UInt32 AccountUniqueID );
@@ -41,17 +42,17 @@ public:
 
 	inline const HANDLE* GetThreadEventHandle( void )
 	{
-		return &_parsePacketEvent;
+		return _parsePacketEvents;
 	}
 
-	inline void WakeupParsePacketThread( void )
+	inline void WakeupParsePacketThread( int index )
 	{
-		SetEvent( _parsePacketEvent );
+		SetEvent( _parsePacketEvents[index] );
 	}
 
-	inline void ResetWaitEvent( void )
+	inline void ResetWaitEvent( int index )
 	{
-		ResetEvent( _parsePacketEvent );
+		ResetEvent( _parsePacketEvents[index] );
 	}
 
 	inline void StopParsePacketThread( void )
@@ -62,7 +63,9 @@ public:
 	CQueue<IOCPData*>* GetIOCPDataQueue( void ) { return &_IOCPDatas; }
 private:
 	bool _runningParsePacketThread;
-	HANDLE _parsePacketEvent;
+	//HANDLE _parsePacketEvent;
+	UInt16 _waitEventCount;
+	HANDLE* _parsePacketEvents;
 	CQueue<IOCPData*> _IOCPDatas;
 
 	std::unordered_map<UInt32, ChatUserInfo*> userTables;

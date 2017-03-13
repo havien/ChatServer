@@ -9,7 +9,9 @@ using namespace Aurora;
 class ChatUserInfo
 {
 public:
-	ChatUserInfo( Int64 AccountUniqueID, WCHAR* pAccountID, WCHAR* pNickName, SOCKET Socket );
+	ChatUserInfo( const Int64 AccountUniqueID, const WCHAR* pAccountID, 
+				  const WCHAR* pNickName, const SOCKET Socket );
+
 	~ChatUserInfo( void );
 			
 	void Reset( void );

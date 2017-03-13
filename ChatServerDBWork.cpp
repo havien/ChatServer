@@ -22,7 +22,9 @@ bool AccountDBWork::NewAccount( WCHAR* pAccountID, WCHAR* pPassword, OUT Int64 &
 		WCHAR wideBuffer[MAX_SQL_STRING_LEN] = {0};
 		char multibyteBuffer[MAX_SQL_STRING_LEN] = {0};
 
-		wsprintf( wideBuffer, L"INSERT INTO GT_Account( AccountID, Password ) VALUES( \'%s\', \'%s\' )", pAccountID, pPassword );
+		wsprintf( wideBuffer, L"INSERT INTO GT_Account( AccountID, Password ) VALUES( \'%s\', \'%s\' )", 
+				  pAccountID, pPassword );
+
 		AuroraStringManager->WideToMultiByte( wideBuffer, multibyteBuffer );
 
 		bool result = AuroraSQLiteManager->Prepare( EQueryType::Insert, multibyteBuffer );
@@ -50,7 +52,9 @@ bool AccountDBWork::NewPlayer( UInt32 AccountUniqueID, WCHAR* pNickName )
 		WCHAR wideBuffer[MAX_SQL_STRING_LEN] = {0};
 		char multiByteBuffer[MAX_SQL_STRING_LEN] = {0};
 
-		wsprintf( wideBuffer, L"INSERT INTO GT_Player( AccountID, NickName ) VALUES( \'%d\', \'%s\' )", AccountUniqueID, pNickName );
+		wsprintf( wideBuffer, L"INSERT INTO GT_Player( AccountID, NickName ) VALUES( \'%d\', \'%s\' )", 
+				  AccountUniqueID, pNickName );
+
 		AuroraStringManager->WideToMultiByte( wideBuffer, multiByteBuffer );
 
 		bool result = AuroraSQLiteManager->Prepare( EQueryType::Insert, multiByteBuffer );
@@ -72,7 +76,9 @@ bool AccountDBWork::SelectAccountUniqueID( WCHAR* pAccountID, WCHAR* pPassword, 
 		WCHAR wideBuffer[MAX_SQL_STRING_LEN] = { 0 };
 		char multiByteBuffer[MAX_SQL_STRING_LEN] = { 0 };
 
-		wsprintf( wideBuffer, L"SELECT UniqueID FROM GT_Account WHERE AccountID = \'%s\' AND Password = \'%s\'", pAccountID, pPassword );
+		wsprintf( wideBuffer, L"SELECT UniqueID FROM GT_Account WHERE AccountID = \'%s\' AND Password = \'%s\'", 
+				  pAccountID, pPassword );
+
 		AuroraStringManager->WideToMultiByte( wideBuffer, multiByteBuffer );
 
 		bool TryPrepare = AuroraSQLiteManager->Prepare( EQueryType::Select, multiByteBuffer );

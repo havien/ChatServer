@@ -21,6 +21,8 @@ int _tmain( int argc, _TCHAR* argv[] )
 {
 	argc; argv;
 
+	std::srand( (unsigned int)std::time( 0 ) );
+
 	WCHAR localeBuffer[100] = { 0 };
 	GetLocaleInfo( LOCALE_USER_DEFAULT, LOCALE_SENGLANGUAGE, localeBuffer, 100 );
 	_tsetlocale( LC_ALL, localeBuffer );
@@ -35,25 +37,42 @@ int _tmain( int argc, _TCHAR* argv[] )
 		return 0;
 	}
 
-	AuroraWinsockManager->SetNetworkMode( Aurora::Network::ENetworkRunMode::Server );
-	AuroraNetworkManager->SetNetworkMode( Aurora::Network::ENetworkRunMode::Server );
+	AuroraWinsockManager->SetNetworkMode( ENetworkRunMode::Server );
+	AuroraNetworkManager->SetNetworkMode( ENetworkRunMode::Server );
+	AuroraNetworkManager->InitServerNetwork( 15541 );
+	if( false == AuroraNetworkManager->StartServerNetwork() )
+	{
+		getchar();
+		return 0;
+	}
 	
 	auto processCount = AuroraMiscManager->GetProcessorCountUInt16();
 	bool bInit = AuroraWinsockManager->InitIOCP( processCount );
 	if( true == bInit )
 	{
-		HANDLE waitHandle = AuroraThreadManager->BeginThread( ChatPacketProcessor->ParsePacket, ChatPacketProcessor, nullptr );
+		ChatPacketProcessor->CreateEventHandles( (processCount / 2) );
+
+		for( auto i = 0; i < (processCount / 2); ++i )
+		{
+			AuroraThreadManager->BeginThread( ChatPacketProcessor->ParsePacket, 
+											  ChatPacketProcessor, 
+											  nullptr );
+		}
+		
+
 		PRINT_FILE_LOG( L"Success to Start Server..!\n" );
 
 		AuroraWinsockManager->StartIOCPWorker( ChatPacketProcessor->GetIOCPDataQueue(),
 											   ChatPacketProcessor->GetThreadEventHandle(),
-											   (processCount/2), 
+											   (processCount/2),
 											   false );
 					
+
+		//AuroraNetworkManager->AcceptClient();
 		getchar();
 			
-		WaitForSingleObject( waitHandle, INFINITE );				
-		CloseHandle( waitHandle );
+		/*WaitForSingleObject( waitHandle, INFINITE );				
+		CloseHandle( waitHandle );*/
 
 		PRINT_NORMAL_LOG( L"Success to Terminate Server..!\n" );
 	}

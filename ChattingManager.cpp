@@ -3,6 +3,7 @@
 #include "../AuroraNetwork/NetworkManager.h"
 
 #include "ChattingManager.h"
+#include "ChatPacketDefine.h"
 
 using namespace Aurora;
 using namespace Aurora::Network;
@@ -17,11 +18,11 @@ ChattingManager::~ChattingManager( void )
 
 bool ChattingManager::SendSignupPacket( WCHAR* pAccountID, WCHAR* pPassword, WCHAR* pNickName )
 {
-	/*if( pAccountID && pPassword && pNickName )
+	if( pAccountID && pPassword && pNickName )
 	{
-		ClientPacketRegisterReq RegisterReq;
+		CPacketRegisterReq RegisterReq;
 
-		AuroraStringManager->ClearAndCopy( pAccountID, RegisterReq.AccountID, (MAX_ACCOUNT_ID_LEN - 1) );
+		/*AuroraStringManager->ClearAndCopy( pAccountID, RegisterReq.AccountID, (MAX_ACCOUNT_ID_LEN - 1) );
 		AuroraStringManager->ClearAndCopy( pPassword, RegisterReq.Password, (MAX_PASSWORD_LEN - 1) );
 		AuroraStringManager->ClearAndCopy( pNickName, RegisterReq.NickName, (MAX_NICKNAME_LEN - 1) );
 		RegisterReq.CalculateSize();
@@ -38,8 +39,8 @@ bool ChattingManager::SendSignupPacket( WCHAR* pAccountID, WCHAR* pPassword, WCH
 		if( 0 < sendBytes )
 		{
 			return true;
-		}
-	}*/
+		}*/
+	}
 
 	return false;
 }

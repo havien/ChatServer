@@ -8,152 +8,135 @@
 
 #include "ChatUserInfo.h"
 #include "ChatParsePacket.h"
+#include "ChatPacketDefine.h"
 
 PacketProcessor::PacketProcessor( void ) :
 _IOCPDatas( NORMAL_QUEUE_SIZE )
 {
-	_parsePacketEvent = CreateEvent( NULL, TRUE, FALSE, NULL );
-	if( _parsePacketEvent == NULL )
-	{
-		//printf( "CreateEvent failed (%d)\n", GetLastError() );
-	}
-
 	_runningParsePacketThread = true;
 }
+
 PacketProcessor::~PacketProcessor( void )
 {
 	userTables.erase( userTables.begin(), userTables.end() );
 
 	for ( auto counter = 0; counter < _IOCPDatas.GetSize(); ++counter )
 	{
-		IOCPData* pIOCPData = _IOCPDatas.Dequeue();
+		auto pIOCPData = _IOCPDatas.Dequeue();
 		if( pIOCPData )
 		{
 			SAFE_DELETE( pIOCPData );
 		}
 	}
 
-	CloseHandle( _parsePacketEvent );
+	for( auto counter = 0; counter < _waitEventCount; ++counter )
+	{
+		CloseHandle( _parsePacketEvents[counter] );
+		delete _parsePacketEvents[counter];
+	}
+}
+
+void PacketProcessor::CreateEventHandles( UInt16 waitEventCount )
+{
+	_waitEventCount = waitEventCount;
+	_parsePacketEvents = new HANDLE[_waitEventCount];
+	for( int i = 0; i < _waitEventCount; ++i )
+	{
+		_parsePacketEvents[i] = CreateEvent( NULL, TRUE, FALSE, NULL );
+		if( _parsePacketEvents[i] == NULL )
+		{
+			//printf( "CreateEvent failed (%d)\n", GetLastError() );
+		}
+	}
 }
 
 UInt32 __stdcall PacketProcessor::ParsePacket( void* pArgs )
 {
 	if( pArgs )
 	{
-		auto pThis = (PacketProcessor *)pArgs;
+		auto pThis = reinterpret_cast<PacketProcessor*>(pArgs);
 		auto pBufferQueue = pThis->GetIOCPDataQueue();
+
 		while( true == pThis->_runningParsePacketThread )
 		{
-			auto WaitResult = WaitForSingleObject( pThis->_parsePacketEvent, INFINITE );
-			if( WAIT_OBJECT_0 == WaitResult )
+			int threadIndex = 0;
+			auto WaitResult = WaitForMultipleObjects( pThis->_waitEventCount, pThis->_parsePacketEvents, 
+													  FALSE, INFINITE );
+
+			switch( WaitResult )
 			{
-				if( 0 == pBufferQueue->ItemCount() )
+				case WAIT_OBJECT_0:
+					threadIndex = 0;
+					break;
+				case WAIT_OBJECT_0 + 1:
+					threadIndex = 1;
+					break;
+				case WAIT_OBJECT_0 + 2:
+					threadIndex = 2;
+					break;
+				case WAIT_OBJECT_0 + 3:
+					threadIndex = 3;
+					break;
+				case WAIT_ABANDONED_0:
+				case WAIT_FAILED:
 				{
-					// Sleep.
-					pThis->ResetWaitEvent();
+					continue;
 				}
+			}
 
-				if( 0 < pBufferQueue->ItemCount() )
+			if( 0 == pBufferQueue->ItemCount() )
+			{
+				// Sleep.
+				pThis->ResetWaitEvent( threadIndex );
+			}
+
+			if( 0 < pBufferQueue->ItemCount() )
+			{
+				auto pIOCPData = pBufferQueue->Dequeue();
+				if( pIOCPData )
 				{
-					auto pIOCPData = pBufferQueue->Dequeue();
-					if( pIOCPData )
+					//bool isValidPacket = false;
+					auto pPacket = reinterpret_cast<BasePacket*>(pIOCPData->buffer);
+					if( pPacket )
 					{
-						bool isValidPacket = false;
-						BasePacket* pPacket = reinterpret_cast<BasePacket*>(pIOCPData->buffer);
-						if( pPacket )
+						if( pPacket->GetSize() > MAX_BUFFER_LEN )
 						{
-							if( pPacket->GetSize() > MAX_BUFFER_LEN )
+							PRINT_NORMAL_LOG( L"Current Size Bigger than MaxNetworkBufferLength : %d, %d\n",
+												pPacket->GetSize(), MAX_BUFFER_LEN );
+						}
+
+						auto type = static_cast<EPacketOperation>(pPacket->GetType());
+						switch( type )
+						{
+							case EPacketOperation::RegisterReq:
 							{
-								PRINT_NORMAL_LOG( L"Current Size Bigger than MaxNetworkBufferLength : %d, %d\n",
-												  pPacket->GetSize(), MAX_BUFFER_LEN );
+								auto pRegisterReq = reinterpret_cast<CPacketRegisterReq*>(pPacket);
+								if( true == pRegisterReq->CheckSize() )
+								{
+									PRINT_NORMAL_LOG( L"Vaild Packet true!, RegisterReq\n" );
+
+									CPacketRegisterAck response;
+									response.CalculateSize();
+
+									if( 0 == (std::rand() % 2) )
+									{
+										Sleep( 10000 );
+										pThis->RequestSend( pIOCPData->socket, (const void*)&response, response.GetSize() );
+									}
+								}
+								break;
 							}
-
-							auto type = static_cast<EPacketOperation>(pPacket->GetType());
-							switch ( type )
+							default:
 							{
-								case EPacketOperation::RegisterReq:
-								{
-									auto pRegisterReq = reinterpret_cast<ClientPacketRegisterReq*>(pPacket);
-									if( true == pRegisterReq->CheckSize() )
-									{
-										isValidPacket = true;
-										PRINT_NORMAL_LOG( L"Vaild Packet true!, RegisterReq\n" );
-										pThis->ProcessRegister( pIOCPData->socket, pRegisterReq->AccountID, 
-																pRegisterReq->Password, pRegisterReq->NickName );
-									}
-									break;
-								}
-								/*case EPacketOperation::LoginReq:
-								{
-									CPacketLoginReq *pLoginReq = (CPacketLoginReq *)pPacket;
-									if( true == pLoginReq->CheckSize() )
-									{
-										isValidPacket = true;
-										PRINT_NORMAL_LOG( L"Vaild Packet true!, LoginReq\n" );
-										pThis->ProcessLogin( pIOCPData->socket, pLoginReq->AccountID, pLoginReq->Password );
-									}
-									break;
-								}
-								case EPacketOperation::LogoutReq:
-								{
-									CPacketLogoutReq *pLogoutReq = (CPacketLogoutReq *)pPacket;
-									if( true == pLogoutReq->CheckSize() )
-									{
-										isValidPacket = true;
-										PRINT_NORMAL_LOG( L"Vaild Packet true!, LogoutReq\n" );
-										pThis->ProcessLogout( pIOCPData->socket, pLogoutReq->AccountUniqueID );
-									}
-									 break;
-								}
-								case EPacketOperation::ChatReq:
-								{
-									CPacketNormalChatReq *pChatReq = (CPacketNormalChatReq *)pPacket;
-									if( true == pChatReq->CheckSize() )
-									{
-										isValidPacket = true;
-										PRINT_NORMAL_LOG( L"Vaild Packet true!, ChatReq\n" );
-										pThis->ProcessNormalChat( pIOCPData->socket, pChatReq->GetSenderAccountID(), pChatReq->GetChatText() );
-									}
-									break;
-								}
-								case EPacketOperation::WhisperChatReq:
-								{
-									CPacketWhisperChatReq *pWhisperChatReq = (CPacketWhisperChatReq *)pPacket;
-									if( true == pWhisperChatReq->CheckSize() )
-									{
-										isValidPacket = true;
-										PRINT_NORMAL_LOG( L"Vaild Packet true!, WhisperChatReq\n" );
-										pThis->ProcessWhisperNormalChat( pIOCPData->socket,
-																		 pWhisperChatReq->m_SenderAccountID,
-																		 pWhisperChatReq->m_TargetAccountID,
-																		 pWhisperChatReq->m_ChatText );
-
-									}
-									break;
-								}*/
-								default:
-								{
-									PRINT_NORMAL_LOG( L"Unknown Packet! Operation : %d\n", 
-													  pPacket->GetType() );
-									break;
-								}
+								PRINT_NORMAL_LOG( L"Unknown Packet! Operation : %d\n", 
+													pPacket->GetType() );
+								break;
 							}
 						}
 					}
 				}
 
-				pThis->ResetWaitEvent();
-			}
-			else
-			{
-				switch ( WaitResult )
-				{
-					case WAIT_ABANDONED_0:
-					case WAIT_FAILED:
-					{
-						break;
-					}
-				}
+				pThis->ResetWaitEvent( threadIndex );
 			}
 		}
 	}
@@ -230,6 +213,7 @@ bool PacketProcessor::ProcessRegister( SOCKET socket, WCHAR* pAccountID, WCHAR* 
 
 bool PacketProcessor::ProcessLogin( SOCKET Socket, WCHAR* pAccountID, WCHAR* pPassword )
 {
+	Socket; pAccountID; pPassword;
 	if( pAccountID && pPassword )
 	{
 		//AccountDBWork DBWork;
@@ -297,6 +281,8 @@ bool PacketProcessor::ProcessLogin( SOCKET Socket, WCHAR* pAccountID, WCHAR* pPa
 
 bool PacketProcessor::ProcessLogout( SOCKET Socket, UInt32 AccountUniqueID )
 {
+	Socket; AccountUniqueID;
+
 	//CPacketLogoutAck PacketLogoutAck;
 	//PacketLogoutAck.SetAccountUniqueID( AccountUniqueID );
 
@@ -339,6 +325,8 @@ bool PacketProcessor::ProcessLogout( SOCKET Socket, UInt32 AccountUniqueID )
 
 bool PacketProcessor::ProcessNormalChat( SOCKET Socket, const WCHAR* pSenderAccountID, const WCHAR* pChatText )
 {
+	Socket; pSenderAccountID; pChatText;
+
 	/*CBroadcastPacketNormalChat BroadcastChatPacket;
 	BroadcastChatPacket.SetAccountID( pSenderAccountID );
 	BroadcastChatPacket.SetChatText( pChatText );
@@ -349,8 +337,11 @@ bool PacketProcessor::ProcessNormalChat( SOCKET Socket, const WCHAR* pSenderAcco
 	return true;
 }
 
-bool PacketProcessor::ProcessWhisperNormalChat( SOCKET Socket, const WCHAR* pSenderAccountID, const WCHAR* pTargetAccountID, const WCHAR* pChatText )
+bool PacketProcessor::ProcessWhisperNormalChat( SOCKET Socket, const WCHAR* pSenderAccountID, 
+												const WCHAR* pTargetAccountID, const WCHAR* pChatText )
 {
+	Socket; pSenderAccountID; pTargetAccountID; pChatText;
+
 	//CPacketWhisperChatAck PacketWhisperChatAck;
 
 	//// Already Login?

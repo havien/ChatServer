@@ -5,8 +5,10 @@
 using namespace Aurora;
 using namespace Aurora::Network;
 
-ChatUserInfo::ChatUserInfo( Int64 AccountUniqueID, WCHAR* pAccountID, WCHAR* pNickName, SOCKET Socket ) :
-	accountUniqueID( AccountUniqueID ), socket( Socket )
+ChatUserInfo::ChatUserInfo( const Int64 AccountUniqueID, const WCHAR* pAccountID, 
+							const WCHAR* pNickName, const SOCKET pSocket ) :
+accountUniqueID( AccountUniqueID ), 
+socket( pSocket )
 {
 	AuroraStringManager->ClearAndCopy( pAccountID, accountID, (MAX_ACCOUNT_ID_LEN - 1) );
 	AuroraStringManager->ClearAndCopy( pNickName, nickName, (MAX_NICKNAME_LEN - 1) );
