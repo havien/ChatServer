@@ -10,14 +10,14 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ChatServer", "ChatServer.vc
 		{12F3FCD4-138A-412C-87A4-E2559ECA381E} = {12F3FCD4-138A-412C-87A4-E2559ECA381E}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AuroraDatabase", "..\AuroraDatabase\AuroraDatabase.vcxproj", "{3824BD92-AF1F-4D32-B76C-C5D0C399FEB0}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AuroraDatabase", "..\Aurora\Database\AuroraDatabase.vcxproj", "{3824BD92-AF1F-4D32-B76C-C5D0C399FEB0}"
 	ProjectSection(ProjectDependencies) = postProject
 		{12F3FCD4-138A-412C-87A4-E2559ECA381E} = {12F3FCD4-138A-412C-87A4-E2559ECA381E}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AuroraUtility", "..\AuroraUtility\AuroraUtility.vcxproj", "{12F3FCD4-138A-412C-87A4-E2559ECA381E}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AuroraUtility", "..\Aurora\Utility\AuroraUtility.vcxproj", "{12F3FCD4-138A-412C-87A4-E2559ECA381E}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AuroraNetwork", "..\AuroraNetwork\AuroraNetwork.vcxproj", "{129F3993-AD58-458B-A975-41ABD4E95A29}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AuroraNetwork", "..\Aurora\Network\AuroraNetwork.vcxproj", "{129F3993-AD58-458B-A975-41ABD4E95A29}"
 	ProjectSection(ProjectDependencies) = postProject
 		{12F3FCD4-138A-412C-87A4-E2559ECA381E} = {12F3FCD4-138A-412C-87A4-E2559ECA381E}
 	EndProjectSection

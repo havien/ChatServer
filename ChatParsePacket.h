@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../AuroraUtility/AuroraDefine.h"
-#include "../AuroraUtility/Queue.h"
+#include "../Aurora/Utility/AuroraDefine.h"
+#include "../Aurora/Utility/Queue.h"
 
 #include "ChatServerDBWork.h"
 
@@ -13,11 +13,10 @@ class PacketProcessor : public Singleton<PacketProcessor>
 {
 	friend class Singleton<PacketProcessor>;
 private:
-	PacketProcessor( void );
-	NON_COPYABLE( PacketProcessor );
+	PacketProcessor();
 public:
 	void CreateEventHandles( UInt16 waitEventCount );
-	virtual ~PacketProcessor( void );
+	virtual ~PacketProcessor();
 	static UInt32 __stdcall ParsePacket( void* pArgs );
 
 	void RequestSend( SOCKET Socket, const void* pPacket, const size_t PacketSize );
@@ -60,10 +59,9 @@ public:
 		_runningParsePacketThread = false;
 	}
 
-	CQueue<IOCPData*>* GetIOCPDataQueue( void ) { return &_IOCPDatas; }
+	CQueue<IOCPData*>* GetIOCPDataQueue(){ return &_IOCPDatas; }
 private:
 	bool _runningParsePacketThread;
-	//HANDLE _parsePacketEvent;
 	UInt16 _waitEventCount;
 	HANDLE* _parsePacketEvents;
 	CQueue<IOCPData*> _IOCPDatas;

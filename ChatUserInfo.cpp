@@ -1,5 +1,5 @@
 #pragma once
-#include "../AuroraUtility/StringManager.h"
+#include "../Aurora/Utility/StringManager.h"
 #include "ChatUserInfo.h"
 
 using namespace Aurora;

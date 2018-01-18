@@ -1,19 +1,19 @@
 #pragma once
-#include "../AuroraUtility/StringManager.h"
-#include "../AuroraUtility/MiscManager.h"
+#include "../Aurora/Utility/StringManager.h"
+#include "../Aurora/Utility/LogManager.h"
 
-#include "../AuroraNetwork/PacketBase.h"
-#include "../AuroraNetwork/WinsockManager.h"
-#include "../AuroraNetwork/NetworkManager.h"
+#include "../Aurora/Network/PacketBase.h"
+#include "../Aurora/Network/IOCPManager.h"
+#include "../Aurora/Network/NetworkManager.h"
 
 #include "ChatUserInfo.h"
 #include "ChatParsePacket.h"
 #include "ChatPacketDefine.h"
 
-PacketProcessor::PacketProcessor( void ) :
-_IOCPDatas( NORMAL_QUEUE_SIZE )
+PacketProcessor::PacketProcessor():
+_IOCPDatas( NORMAL_QUEUE_SIZE ),
+_runningParsePacketThread( true )
 {
-	_runningParsePacketThread = true;
 }
 
 PacketProcessor::~PacketProcessor( void )
@@ -25,7 +25,7 @@ PacketProcessor::~PacketProcessor( void )
 		auto pIOCPData = _IOCPDatas.Dequeue();
 		if( pIOCPData )
 		{
-			SAFE_DELETE( pIOCPData );
+			SafeDelete( pIOCPData );
 		}
 	}
 
@@ -40,12 +40,12 @@ void PacketProcessor::CreateEventHandles( UInt16 waitEventCount )
 {
 	_waitEventCount = waitEventCount;
 	_parsePacketEvents = new HANDLE[_waitEventCount];
-	for( int i = 0; i < _waitEventCount; ++i )
+	for( auto i = 0; i < _waitEventCount; ++i )
 	{
 		_parsePacketEvents[i] = CreateEvent( NULL, TRUE, FALSE, NULL );
 		if( _parsePacketEvents[i] == NULL )
 		{
-			//printf( "CreateEvent failed (%d)\n", GetLastError() );
+			//printf( "CreateEvent failed (%d)", GetLastError() );
 		}
 	}
 }
@@ -101,8 +101,8 @@ UInt32 __stdcall PacketProcessor::ParsePacket( void* pArgs )
 					{
 						if( pPacket->GetSize() > MAX_BUFFER_LEN )
 						{
-							PRINT_NORMAL_LOG( L"Current Size Bigger than MaxNetworkBufferLength : %d, %d\n",
-												pPacket->GetSize(), MAX_BUFFER_LEN );
+							AuroraLogManager->Error( L"Current Size Bigger than MaxNetworkBufferLength : %d, %d",
+													 pPacket->GetSize(), MAX_BUFFER_LEN );
 						}
 
 						auto type = static_cast<EPacketOperation>(pPacket->GetType());
@@ -113,7 +113,7 @@ UInt32 __stdcall PacketProcessor::ParsePacket( void* pArgs )
 								auto pRegisterReq = reinterpret_cast<CPacketRegisterReq*>(pPacket);
 								if( true == pRegisterReq->CheckSize() )
 								{
-									PRINT_NORMAL_LOG( L"Vaild Packet true!, RegisterReq\n" );
+									AuroraLogManager->Trace( L"Vaild Packet true!, RegisterReq" );
 
 									CPacketRegisterAck response;
 									response.CalculateSize();
@@ -128,8 +128,7 @@ UInt32 __stdcall PacketProcessor::ParsePacket( void* pArgs )
 							}
 							default:
 							{
-								PRINT_NORMAL_LOG( L"Unknown Packet! Operation : %d\n", 
-													pPacket->GetType() );
+								AuroraLogManager->Error( L"Unknown Packet! Operation : %d", pPacket->GetType() );
 								break;
 							}
 						}
@@ -148,7 +147,7 @@ void PacketProcessor::RequestSend( SOCKET Socket, const void* pPacket, const siz
 {
 	IOCPData data( Socket );
 	memcpy( data.buffer, &pPacket, PacketSize );
-	AuroraWinsockManager->RequestSendToIOCP( &data, PacketSize );
+	AuroraIOCPManager->RequestSendToIOCP( &data, PacketSize );
 }
 
 void PacketProcessor::RequestSendAllUser( const void* pPacket, const size_t PacketSize )
@@ -226,24 +225,24 @@ bool PacketProcessor::ProcessLogin( SOCKET Socket, WCHAR* pAccountID, WCHAR* pPa
 		//if( true == DBResult && 0 < AccountUniqueID )
 		//{	
 		//	// Login DB Success!!
-		//	PRINT_NORMAL_LOG( L"Logged-in User : %d\n", AccountUniqueID );
+		//	PRINT_NORMAL_LOG( L"Logged-in User : %d", AccountUniqueID );
 
 		//	// Already Login?
 		//	if( true == FindUser( AccountUniqueID ) )
 		//	{
-		//		PRINT_NORMAL_LOG( L"Already-Logged-in User : %d\n", AccountUniqueID );
+		//		PRINT_NORMAL_LOG( L"Already-Logged-in User : %d", AccountUniqueID );
 		//		LoginProcessResult = false;
 		//		PacketLoginAck.SetResult( AuroraNetwork::ePacketResult_AlreadyExists );
 		//	}
 		//	else
 		//	{
-		//		PRINT_NORMAL_LOG( L"Login OK : %d\n", AccountUniqueID );
+		//		PRINT_NORMAL_LOG( L"Login OK : %d", AccountUniqueID );
 
 		//		LoginProcessResult = true;
 		//		PacketLoginAck.SetAccountID( pAccountID );
 		//		PacketLoginAck.SetResult( AuroraNetwork::ePacketResult_OK );
 
-		//		ChatUserInfo *pLoginUser = new ChatUserInfo( AccountUniqueID, pAccountID, L"12345", socket );
+		//		ChatUserInfo* pLoginUser = new ChatUserInfo( AccountUniqueID, pAccountID, L"12345", socket );
 
 		//		userTables.insert( std::make_pair( AccountUniqueID, pLoginUser ) );
 		//		userTablesByAccountID.insert( std::make_pair( pAccountID, pLoginUser ) );
@@ -254,7 +253,7 @@ bool PacketProcessor::ProcessLogin( SOCKET Socket, WCHAR* pAccountID, WCHAR* pPa
 		//}
 		//else
 		//{
-		//	PRINT_NORMAL_LOG( L"Failed to Login, DBResult is false : [%s][%s][%d]\n", pAccountID, pPassword, AccountUniqueID );
+		//	PRINT_NORMAL_LOG( L"Failed to Login, DBResult is false : [%s][%s][%d]", pAccountID, pPassword, AccountUniqueID );
 		//}
 
 		//PacketLoginAck.SetAccountUniqueID( AccountUniqueID );
@@ -288,7 +287,7 @@ bool PacketProcessor::ProcessLogout( SOCKET Socket, UInt32 AccountUniqueID )
 
 	//// Already Login?
 	//bool LogoutProcessResult = false;
-	//ChatUserInfo *pLogoutUser = GetUserInfo( AccountUniqueID );
+	//ChatUserInfo* pLogoutUser = GetUserInfo( AccountUniqueID );
 	//if( nullptr != pLogoutUser && 0 < EraseUser( AccountUniqueID ) )
 	//{
 	//	// Logout!
@@ -346,7 +345,7 @@ bool PacketProcessor::ProcessWhisperNormalChat( SOCKET Socket, const WCHAR* pSen
 
 	//// Already Login?
 	//bool WhisperProcessResult = false;
-	//ChatUserInfo *pTargetUser = GetUserInfo( const_cast<WCHAR* >( pTargetAccountID ) );
+	//ChatUserInfo* pTargetUser = GetUserInfo( const_cast<WCHAR* >( pTargetAccountID ) );
 	//if( nullptr != pTargetUser )
 	//{
 	//	WhisperProcessResult = true;

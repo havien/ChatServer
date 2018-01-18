@@ -1,6 +1,6 @@
 #pragma once
-#include "../AuroraUtility/AuroraDefine.h"
-#include "../AuroraNetwork/PacketBase.h"
+#include "../Aurora/Utility/AuroraDefine.h"
+#include "../Aurora/Network/PacketBase.h"
 
 #include "ChatDefine.h"
 
@@ -10,7 +10,7 @@ using namespace Aurora;
 	class CPacketRegisterReq : public Network::ClientPacket
 	{
 	public:
-		CPacketRegisterReq( void ) :
+		CPacketRegisterReq():
 		ClientPacket( (Int16)ENormalPacketOperation::RegisterReq )
 		{
 
@@ -25,7 +25,7 @@ using namespace Aurora;
 	class CPacketRegisterAck : public Network::ServerPacket
 	{
 	public:
-		CPacketRegisterAck( void ) :
+		CPacketRegisterAck():
 			ServerPacket( (Int16)ENormalPacketOperation::RegisterAck ),
 			uniqueID( 0 )
 		{

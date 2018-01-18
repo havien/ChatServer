@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../AuroraUtility/AuroraDefine.h"
-#include "../AuroraNetwork/Includes.h"
+#include "../Aurora/Utility/AuroraDefine.h"
+#include "../Aurora/Network/Includes.h"
 #include "ChatDefine.h"
 
 using namespace Aurora;
@@ -12,14 +12,14 @@ public:
 	ChatUserInfo( const Int64 AccountUniqueID, const WCHAR* pAccountID, 
 				  const WCHAR* pNickName, const SOCKET Socket );
 
-	~ChatUserInfo( void );
+	~ChatUserInfo();
 			
-	void Reset( void );
+	void Reset();
 
-	inline const Int64 GetAccountUniqueID( void ) const { accountUniqueID; }
-	inline const WCHAR* GetAccountID( void ) { return accountID; }
-	inline const WCHAR* GetNickName( void ) { return nickName; }
-	inline const SOCKET GetSocket( void ) const { return socket; }
+	inline const Int64 GetAccountUniqueID() const { return accountUniqueID; }
+	inline const WCHAR* GetAccountID() const { return accountID; }
+	inline const WCHAR* GetNickName() const { return nickName; }
+	inline const SOCKET GetSocket() const { return socket; }
 private:
 	Int64 accountUniqueID;
 	WCHAR accountID[MAX_ACCOUNT_ID_LEN];

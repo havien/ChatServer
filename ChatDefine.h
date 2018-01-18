@@ -1,5 +1,5 @@
 #pragma once
-#include "../AuroraUtility/AuroraDefine.h"
+#include "../Aurora/Utility/AuroraDefine.h"
 
 using namespace Aurora;
 

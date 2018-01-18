@@ -1,7 +1,7 @@
 #pragma once
-#include "../AuroraUtility/Includes.h"
-#include "../AuroraUtility/AuroraDefine.h"
-#include "../AuroraUtility/AuroraSingleton.h"
+#include "../Aurora/Utility/Includes.h"
+#include "../Aurora/Utility/AuroraDefine.h"
+#include "../Aurora/Utility/AuroraSingleton.h"
 
 using namespace Aurora;
 
@@ -9,8 +9,8 @@ class ChattingManager : public Singleton<ChattingManager>
 {
 	friend class Singleton<ChattingManager>;
 public:
-	ChattingManager( void );
-	virtual ~ChattingManager( void );
+	ChattingManager();
+	virtual ~ChattingManager();
 
 	bool SendSignupPacket( WCHAR* pAccountID, WCHAR* pPassword, WCHAR* pNickName );
 	bool SendLoginPacket( WCHAR* pAccountID, WCHAR* pPassword );

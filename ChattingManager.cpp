@@ -1,6 +1,6 @@
 #pragma once
-#include "../AuroraUtility/StringManager.h"
-#include "../AuroraNetwork/NetworkManager.h"
+#include "../Aurora/Utility/StringManager.h"
+#include "../Aurora/Network/NetworkManager.h"
 
 #include "ChattingManager.h"
 #include "ChatPacketDefine.h"
